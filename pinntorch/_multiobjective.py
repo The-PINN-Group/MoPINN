@@ -11,7 +11,6 @@ import numpy as np
 
 from os import path
 import torch
-from tqdm import tqdm
 import torch.optim
 from sklearn.model_selection import train_test_split
 from torch import device, nn, Tensor

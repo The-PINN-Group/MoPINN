@@ -7,15 +7,45 @@ import copy
 import time
 import math
 import wandb
+from torch.optim.lr_scheduler import _LRScheduler
 
+class ReduceLROnSpike():
+  """
+  Custom learning rate scheduler that reduces learning rate on increasing loss.
 
-#def progressive_value_scaling(loss, value_tensor, scale_factor):
-    # loss_sum_original = loss.sum()
-#    progressive_weight = torch.exp(
-#        -value_tensor / scale_factor
-#    )  # torch.Tensor([[torch.exp(-value_tensor[x]/scale_factor)] for x in range(loss.shape[0])])
-#    weighted_loss = loss * progressive_weight
-#    return weighted_loss  # * loss_sum_original / weighted_loss.sum()
+  Args:
+      optimizer: PyTorch optimizer object.
+      factor: Factor by which to decrease learning rate on increasing loss (default: 0.1).
+  """
+  def __init__(self, optimizer, factor=0.1):
+    self.optimizer=optimizer
+    self.factor = factor
+    self.prev_loss = float('inf')  # Initialize with a high value
+
+  def step(self, metrics):
+    """
+    Updates learning rate based on comparison with previous loss.
+
+    Args:
+        epoch: Current epoch number (ignored in this implementation).
+        val_loss: Optional validation loss (ignored in this implementation).
+    """
+    val_loss = float(metrics)
+
+    in_spike = False
+
+    # Update learning rate based on loss comparison
+    if val_loss > self.prev_loss:
+        if not in_spike:
+            for i, param_group in enumerate(self.optimizer.param_groups):
+                old_lr = float(param_group['lr'])
+                new_lr = old_lr * self.factor
+                param_group['lr'] = new_lr
+        in_spike = True
+    else:
+        in_spike = False
+    # Update previous loss for next comparison
+    self.prev_loss = val_loss
 
 
 class EpochCallBack(ABC):
@@ -29,7 +59,6 @@ class EpochCallBack(ABC):
         """
         pass
 
-    @abstractmethod
     def initiated_copy(self):
         """
         Resets this callback_object to let it process with the same initialized values
@@ -49,6 +78,9 @@ class EpochCallBack(ABC):
         """
         pass
 
+#def descent_direction(model):
+#    params = model.parameters()
+#    return torch.cat([param.data.view(-1) for param in params])
 
 def train_model(
     model: nn.Module,
@@ -58,7 +90,7 @@ def train_model(
     max_epochs: int = 1_000,
     live_logging: bool = True,
     log_interval: int = 1_000,
-    lr_decay: float = 0.0,
+    lr_decay = 0.0,
     parameter_groups: dict = None,
     epoch_callbacks: list = [],
 ) -> nn.Module:
@@ -73,7 +105,8 @@ def train_model(
     
     # setup learning rate scheduler
     if lr_decay > 0.0:
-        lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer=optimizer, factor=1-lr_decay, patience=5, threshold=1e-8, cooldown=5)
+        lr_scheduler = ReduceLROnSpike(optimizer=optimizer, factor=1-lr_decay)
+        #lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer=optimizer, mode='min', factor=1-lr_decay, patience=5, threshold=1e-8, cooldown=5)
     
     # prepare all callbacks
     for e_callback in epoch_callbacks:
@@ -96,19 +129,18 @@ def train_model(
                 if losses.shape[0] > 1 and epoch < 1:
                     warnings.warn("No multi-objective optimization method (mo_method) was set, despite defining multiple losses. Training will continue with the sum of the losses!", RuntimeWarning)
                 loss = sum(losses)
-                loss.backward()
+                loss.backward(retain_graph=True)
             else:
                 # multi-objective
-                loss_temp, mo_dict = mo_method.backward(
+                loss, mo_dict = mo_method.backward(
                     losses=losses, shared_parameters=list(model.parameters())
                 )
                 # store multi-objective extra informations in an extra log
                 if mo_dict is not None:
                     for key, value in mo_dict.items():
                         extra_logs[key] = value
-                    if 'weighted_loss' in mo_dict:
-                        # just for learning rate scheduler
-                        loss = mo_dict['weighted_loss']    
+            
+            #print(descent_direction(model))
 
             # learning optimizer step
             optimizer.step()
@@ -174,10 +206,13 @@ def _gather_loss_labels(loss_fun, model):
     for g in loss_fun:
         result = g(model)
         #print(g, '\tresult\t', result)
+        #print(type(result))
         if type(result) is dict:
             result = list(result.keys())
         else:
-            if len(result.shape) == 0:
+            if type(result) is tuple:
+                result_len = len(result)
+            elif len(result.shape) == 0:
                 result_len = 1
             else:
                 result_len = len(result)
