@@ -82,6 +82,28 @@ class EpochCallBack(ABC):
 #    params = model.parameters()
 #    return torch.cat([param.data.view(-1) for param in params])
 
+class AllDataMonitor(EpochCallBack):
+    """
+    Abstract base class for epoch callback objects.
+    """
+    def __init__(self, data_loss_fn, physics_loss_fn, validation_loss_fn):
+        self.data_loss_fn = data_loss_fn
+        self.physics_loss_fn = physics_loss_fn
+        self.val_loss_fn = validation_loss_fn
+
+    def prepare(self, max_epochs, model, loss_fn, optimizer):
+        self.val_history = []
+        self.lr_history = []
+        self.data_history = []
+        self.physics_history = []
+
+    def process(self, epoch, model, loss_fn, optimizer, current_loss, extra_logs):
+        self.lr_history.append(float(optimizer.param_groups[0]["lr"]))
+        self.val_history.append(self.val_loss_fn(model).detach().numpy())
+        self.data_history.append(self.data_loss_fn(model).detach().numpy())
+        self.physics_history.append(self.physics_loss_fn(model).detach().numpy())
+
+
 def train_model(
     model: nn.Module,
     loss_fn: Callable,
