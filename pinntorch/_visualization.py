@@ -1,6 +1,6 @@
 from pinntorch._dependencies import *
 from pinntorch._model import f
-from pinntorch._training import SolutionMonitor
+from pinntorch._training import SolutionPlotMonitor
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from matplotlib import cbook
@@ -207,7 +207,7 @@ def plot_solution_xt_animation(model: nn.Module, x: torch.Tensor, t: torch.Tenso
 
 
 def animate_solution_1D_history(
-    solution_monitor: SolutionMonitor, true_solution_fn=None, ylim=(0, 1), interval=10
+    solution_monitor: SolutionPlotMonitor, true_solution_fn=None, ylim=(0, 1), interval=10
 ):
     solution_plot_history = solution_monitor.solution_plot
     solution_train_history = solution_monitor.solution_train

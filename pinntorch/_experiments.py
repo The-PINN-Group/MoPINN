@@ -51,6 +51,10 @@ def save_models(path, models):
         model_path = os.path.join(path, f"model_{i}.pt")
         torch.save(model.state_dict(), model_path)
 
+def save_list_of_model_states(path, model_states):
+    for i, model_state in enumerate(model_states):
+        model_path = os.path.join(path, f"model_{i}.pt")
+        torch.save(model_state, model_path)
 
 
 #def store_list_as_group(f, name, list_data):

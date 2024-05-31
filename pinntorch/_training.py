@@ -25,10 +25,6 @@ class ReduceLROnSpike():
   def step(self, metrics):
     """
     Updates learning rate based on comparison with previous loss.
-
-    Args:
-        epoch: Current epoch number (ignored in this implementation).
-        val_loss: Optional validation loss (ignored in this implementation).
     """
     val_loss = float(metrics)
 
@@ -267,7 +263,22 @@ class BestModelSaver(EpochCallBack):
             self.epoch_of_best = epoch
 
 
-class SolutionMonitor(EpochCallBack):
+class SolutionModelMonitor(EpochCallBack):
+    def __init__(self, save_interval=1):
+        self.save_interval = save_interval
+
+    def prepare(self, max_epochs, model, loss_fn, optimizer):
+        self.model_states = []
+
+    def initiated_copy(self):
+        return SolutionModelMonitor(self.save_interval)
+    
+    def process(self, epoch, model, loss_fn, optimizer, current_loss, extra_logs):
+        if epoch % self.save_interval == 0:
+            self.model_states.append(copy.deepcopy(model.state_dict()))
+        
+
+class SolutionPlotMonitor(EpochCallBack):
     """
     A class saves the predicted output of the current solution function at specified plot points.
     """
@@ -286,7 +297,7 @@ class SolutionMonitor(EpochCallBack):
             self.solution_train = []
 
     def initiated_copy(self):
-        return SolutionMonitor(
+        return SolutionPlotMonitor(
             self._plot_points, self._train_points, store_every=self.plot_interval
         )
 
@@ -303,12 +314,12 @@ class SolutionMonitor(EpochCallBack):
             if type(f_final_training) is not list:
                 f_final_training = [f_final_training]
             self.solution_train.append(
-                SolutionMonitor._detach_and_numpy(f_final_training)
+                SolutionPlotMonitor._detach_and_numpy(f_final_training)
             )
         f_final = f(model, self._plot_points, of="all")
         if type(f_final) is not list:
             f_final = [f_final]
-        self.solution_plot.append(SolutionMonitor._detach_and_numpy(f_final))
+        self.solution_plot.append(SolutionPlotMonitor._detach_and_numpy(f_final))
 
     def process(self, epoch, model, loss_fn, optimizer, current_loss, extra_logs):
         if epoch % self.plot_interval == 0:
