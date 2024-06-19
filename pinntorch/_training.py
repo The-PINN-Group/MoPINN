@@ -7,7 +7,7 @@ import copy
 import time
 import math
 import wandb
-from torch.optim.lr_scheduler import _LRScheduler
+
 
 class ReduceLROnSpike():
   """
