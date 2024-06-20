@@ -95,9 +95,9 @@ class AllDataMonitor(EpochCallBack):
 
     def process(self, epoch, model, loss_fn, optimizer, current_loss, extra_logs):
         self.lr_history.append(float(optimizer.param_groups[0]["lr"]))
-        self.val_history.append(self.val_loss_fn(model).detach().numpy())
-        self.data_history.append(self.data_loss_fn(model).detach().numpy())
-        self.physics_history.append(self.physics_loss_fn(model).detach().numpy())
+        self.val_history.append(self.val_loss_fn(model).cpu().detach().numpy())
+        self.data_history.append(self.data_loss_fn(model).cpu().detach().numpy())
+        self.physics_history.append(self.physics_loss_fn(model).cpu().detach().numpy())
 
 
 def train_model(
