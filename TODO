@@ -1,8 +1,9 @@
-[ ] Create Logistic MGDA notebook
-[ ] Create Logistic WS notebook
-[ ] Create Heat WS notebook
+[X] Create Logistic MGDA notebook
+[X] Create Logistic WS notebook
+[X] Create Heat WS notebook
+[ ] Create EA logistic file
 [ ] optimize requirements file
-[ ] remove unnecessary package elements
+[X] remove unnecessary package elements
 [ ] create README
 
 
