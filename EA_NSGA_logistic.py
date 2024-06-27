@@ -1,6 +1,5 @@
 from pinntorch import *
 from functools import partial
-from tqdm import trange
 from pymoo.problems.functional import FunctionalProblem
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.operators.sampling.rnd import FloatRandomSampling
@@ -18,7 +17,7 @@ torch.manual_seed(0)
 #parser = argparse.ArgumentParser(description='Pareto front with NSGA2.')
 #parser.add_argument('--n_value', type=float, required=True, help='n_neurons: the # of neurons')
 #args = parser.parse_args()
-n_neurons = 5#int(args.n_value)
+n_neurons = 9#int(args.n_value)
 
 K = 5.0
 def exact_solution_log(x):
@@ -130,7 +129,7 @@ s = 50
 xl_is, xu_is = s*min(initial_params), s*max(initial_params)  # 50 by 50 works together with 9 Neurons. 
 #list(dict_params.keys())
 
-obj1 = physics_loss(model, training_points)
+obj1 = physics_loss(SimpleWrapper(model), training_points)
 
 print("type of obj1:", type(obj1))
 
@@ -152,7 +151,7 @@ def objective1(X_params):
     model.train()
     train_loss = 0.0
 
-    obj1 = physics_loss(model, training_points)
+    obj1 = physics_loss(SimpleWrapper(model), training_points)
     return obj1.cpu().detach()
 
 def objective2(X_params):
@@ -173,7 +172,7 @@ def objective2(X_params):
     model.train()
     train_loss = 0.0
 
-    obj1 = data_loss(model, data_noisy, training_points)
+    obj1 = data_loss(SimpleWrapper(model), data_noisy, training_points)
     return obj1.cpu().detach()
 
 
@@ -245,4 +244,4 @@ plt.scatter(F_pareto_front[:, 0], F_pareto_front[:, 1], s=30, label="train (EA)"
 plt.xlabel(r"$L_\mathrm{DATA}$")
 plt.ylabel(r"$L_\mathrm{PHYSICS}$")
 plt.show()
-plt.savefig(f"NSGA_n_{n_neurons}/NSGA_n{n_neurons}.png")
+#plt.savefig(f"NSGA_n_{n_neurons}/NSGA_n{n_neurons}.png")

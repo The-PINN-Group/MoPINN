@@ -1,11 +1,11 @@
 [X] Create Logistic MGDA notebook
 [X] Create Logistic WS notebook
 [X] Create Heat WS notebook
-[ ] Create EA logistic file
-[ ] optimize requirements file
+[X] Create EA logistic file
 [X] remove unnecessary package elements
-[ ] create README
-
+[X] create README
+[X] optimize requirements file
+[ ] last cleanups
 
 
 
@@ -15,5 +15,7 @@ installed:
 - torch         2.2.1
 - scipy         1.12.0
 - wandb         0.16.5
+- tqdm
+- pymoo
 - matplotlib    3.8.3
 - scikit-learn  1.4.1

@@ -9,6 +9,22 @@ def _stack_multi_input(*input_tensors):
     else:
         return input_tensors[0]
 
+class SimpleWrapper(nn.Module):
+    def __init__(self, model):
+        super(SimpleWrapper, self).__init__()
+        self.base_model = model
+    
+    def initialize_weights(self, seed=None):
+        if hasattr(self.base_model, 'initialize_weights'):
+            self.base_model.initialize_weights(seed)
+        elif hasattr(self.base_model, 'reset_parameters'):
+            self.base_model.reset_parameters()
+
+    def forward(self, *input_data):
+        x = self.base_model(_stack_multi_input(*input_data))
+        output = [tens.reshape(-1, 1) for tens in torch.unbind(x, 1)]
+        return output
+
 class PINN(nn.Module):
     """
     A simple neural network that approximates the solution of a differential equation.
